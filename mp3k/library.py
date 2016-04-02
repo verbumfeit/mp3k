@@ -7,7 +7,8 @@ from globals import Globals
 
 class LibraryManager:
     def __init__(self):
-        self.library = self.load_library()
+        #self.library = self.load_library()
+        pass
 
     @staticmethod
     def load_library():
