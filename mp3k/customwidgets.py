@@ -124,9 +124,7 @@ class ProgressSlider(Slider):
 
 def collide_point(obj, x, y):
     radius = obj.center_x - obj.x
-    Logger.trace("r=" + str(radius))
     distance = sqrt((x - obj.center_x) ** 2 + (y - obj.center_y) ** 2)
-    Logger.trace("Distance=" + str(distance))
     return distance <= radius
 
 

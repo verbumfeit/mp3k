@@ -1,8 +1,9 @@
 import os
-import select
 import signal
 import subprocess
+import sys
 import urllib.request
+from queue import LifoQueue, Empty
 from threading import Thread
 
 from kivy.clock import mainthread
@@ -10,6 +11,8 @@ from kivy.event import EventDispatcher
 from kivy.properties import BooleanProperty, NumericProperty, Logger
 
 from globals import Globals
+
+ON_POSIX = 'posix' in sys.builtin_module_names
 
 
 class Player(EventDispatcher):
@@ -21,6 +24,9 @@ class Player(EventDispatcher):
         self.current_track = None  # track dict
         self.playback_started = False  # if track was started
         self.player = None  # mplayer process
+        self.output_watcher = None
+        self.queue = LifoQueue()
+        self._start_mplayer()
         super().__init__()
 
     def set_streaming_quality(self, quality):
@@ -55,8 +61,11 @@ class Player(EventDispatcher):
     def _perform_command(self, cmd, expected_tag):
         if self.player.returncode is None:
             print(cmd, flush=True, file=self.player.stdin)  # write cmd to mplayers stdin
-            while select.select([self.player.stdout], [], [], 0.05)[0]:  # give mplayer time to answer...
-                output = self.player.stdout.readline()
+            try:
+                output = self.queue.get_nowait()  # get_nowait()  # get(timeout=0.05)
+            except Empty:
+                pass
+            else:  # got line
                 Logger.trace("Output: {}".format(output.rstrip()))
                 split_output = output.split(expected_tag + '=', 1)
                 if len(split_output) == 2 and split_output[0] == '':  # we have found it
@@ -67,7 +76,15 @@ class Player(EventDispatcher):
                     return False
         else:
             Logger.debug('mplayer process finished..')
+            self._start_mplayer()
             return False
+
+    @staticmethod
+    def enqueue_output(out, queue):
+        for line in iter(out.readline, b''):
+            if '=' in line:
+                queue.put(line)
+        out.close()
 
     def play_track_from_id(self, track):
         # immediately display correct button label/icon and
@@ -84,58 +101,44 @@ class Player(EventDispatcher):
         # start download
         Thread(target=self.download_and_play_track_thread, args=(mp3_url, mp3_path, Globals.BUFFER_ITERATIONS)).start()
 
-    def download_and_play_track_thread(self, url, location, buffer):
-        bytestream = urllib.request.urlopen(url)
-        mp3_file = open(location, 'wb')
-        Logger.debug('Starting download..!')
-
-        mp3_bytes = None
-        iteration = 0
-        playing = False
-        while mp3_bytes is not b'':
-            mp3_bytes = bytestream.read(40000)  # 40,000 bytes
-            mp3_file.write(mp3_bytes)
-            if iteration < buffer:
-                Logger.debug('Buffering..')
-                iteration = iteration + 1
-            elif iteration == buffer:
-                Logger.debug('Buffering complete, playing now..')
-                self._play()
-                playing = True
-                iteration = iteration + 1
-
-                # if iteration == buffer + 1:
-                #    Logger.debug('Caught download in loop')
-                #    while True:
-                #        pass
-
-        Logger.debug('Download completed!')
-        if not playing:  # file was smaller than buffer
-            Logger.debug('File was smaller than buffer, playing now..')
-            self._play()
-        mp3_file.close()
-        bytestream.close()
-
     @mainthread
     def _play(self):
-        # TODO: start mplayer in idle mode, so we don't have to kill an restart the process for each track
-        cmd = ['mplayer', '-slave', '-quiet', self.current_track['mp3_path']]
+        self.send_cmd_to_mplayer('loadfile ' + self.current_track['mp3_path'])
 
-        # kill mplayer process if a track is already running
-        if self.player:
-            self.pause_current_track()
-            if self.player.returncode is None:  # if process doesn't have an exitcode it's still running
-                Logger.debug('Killing old player..')
-                self.player.kill()  # so kill it
-                self._cleanup_mplayer_process()  # and remove the defunct process
-
-        # http://stackoverflow.com/questions/35642313/writing-commands-to-mplayer-subprocess-with-python-3-in-windows
-        self.player = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, bufsize=1, universal_newlines=True)
-
-        Globals.MPLAYER_PID = self.player.pid
         self.playback_started = True
         self.playing = True
+
+    def download_and_play_track_thread(self, url, location, buffer):
+            bytestream = urllib.request.urlopen(url)
+            mp3_file = open(location, 'wb')
+            Logger.debug('Starting download..!')
+
+            mp3_bytes = None
+            iteration = 0
+            playing = False
+            while mp3_bytes is not b'':
+                mp3_bytes = bytestream.read(40000)  # 40,000 bytes
+                mp3_file.write(mp3_bytes)
+                if iteration < buffer:
+                    Logger.debug('Buffering..')
+                    iteration = iteration + 1
+                elif iteration == buffer:
+                    Logger.debug('Buffering complete, playing now..')
+                    self._play()
+                    playing = True
+                    iteration = iteration + 1
+
+                    # if iteration == buffer + 1:
+                    #    Logger.debug('Caught download in loop')
+                    #    while True:
+                    #        pass
+
+            Logger.debug('Download completed!')
+            if not playing:  # file was smaller than buffer
+                Logger.debug('File was smaller than buffer, playing now..')
+                self._play()
+            mp3_file.close()
+            bytestream.close()
 
     def playback_finished(self):
         Logger.info('Playback finished..')
@@ -144,11 +147,31 @@ class Player(EventDispatcher):
         self.progress_percent = 0
         self._cleanup_mplayer_process()
 
+    def _start_mplayer(self):
+        Logger.info('mplayer: Starting..')
+        cmd = ['mplayer', '-slave', '-idle', '-quiet']
+        self.player = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
+                                       close_fds=ON_POSIX)
+
+        Globals.MPLAYER_PID = self.player.pid
+
+        Logger.debug('mplayer: Starting mplayer output reader..')
+        # http://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
+        self.output_watcher = Thread(target=self.enqueue_output, args=(self.player.stdout, self.queue))
+        self.output_watcher.daemon = True  # thread dies with the program
+        self.output_watcher.start()
+
+        Logger.info('mplayer: Successfully started')
+
     @staticmethod
     def kill_mplayer():
         if Globals.MPLAYER_PID:
             Logger.debug('Killing mplayer process..')
             os.kill(Globals.MPLAYER_PID, signal.SIGTERM)
+
+    def kill_output_watcher(self):
+        self.output_watcher.join()
 
     def _cleanup_mplayer_process(self):
         Logger.debug('Cleaning up mplayer process')
