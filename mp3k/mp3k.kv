@@ -1,0 +1,406 @@
+#:kivy 1.9.1
+
+#:import DictAdapter kivy.adapters.dictadapter.DictAdapter
+#:import ListAdapter kivy.adapters.listadapter.ListAdapter
+#:import ButtonBehavior kivy.uix.behaviors.button.ButtonBehavior
+#:import Window kivy.core.window.Window
+#:import App kivy.app.App
+#:import Factory kivy.factory.Factory
+
+<CircleButton>:
+    icon: ''
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'center'
+        pos: root.pos
+        size_hint: None, None
+        size: root.size
+        canvas:
+            Color:
+                rgba: .85, .35, 0, 1
+            Ellipse:
+                pos: root.pos
+                size: root.size
+        Image:
+            source: root.icon
+
+<SearchBar@TextInput>:
+    multiline: False
+    hint_text: 'Search for music..'
+
+<context_menu>
+    size_hint: (None, None)
+    size: (160, 120)
+    pos_hint: {'center_x': .5, 'y': .6}
+    BubbleButton:
+        text: 'Cut'
+    BubbleButton:
+        text: 'Copy'
+    BubbleButton:
+        text: 'Paste'
+
+<TrackPropertyLabel@Label>:
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+
+<PlaylistView>:
+    listview: listview_id
+    cols: 1
+    ListView:
+        id: listview_id
+        #on_adapter: self.adapter.bind_triggers_to_view(self._trigger_reset_populate)
+        adapter:
+            ListAdapter(
+            #sorted_keys=root.data_queue.keys(),
+            data=root.parent.parent.parent.playlist.queue,
+            args_converter = root._args_converter,
+            #propagate_selection_to_data=True,
+            cls=Factory.PlaylistTrackListItem)
+
+<SongViewer>:
+    listview: listview_id
+    id: list_queue
+    cols: 1
+    ListView:
+        id: listview_id
+        #on_selection_change: root.selection_changed(*args)
+        adapter:
+            ListAdapter(
+            #sorted_keys=sorted(root.data_songs.keys()),
+            data=root.data_songs,
+            args_converter=root._args_converter,
+            cls=Factory.TrackListItem)
+
+<StationViewer>
+    id: stationlistview
+    cols: 1
+    ListView:
+        adapter:
+            ListAdapter(
+            #sorted_keys=sorted(root.data_songs.keys()),
+            data=root.data_stations,
+            args_converter=root._args_converter,
+            cls=Factory.StationListItem)
+
+<AlbumViewer>:
+    id: albumlistview
+    cols: 1
+    ListView:
+        adapter:
+            ListAdapter(
+            #sorted_keys=sorted(root.data_songs.keys()),
+            data=root.data_albums,
+            args_converter=root._args_converter,
+            cls=Factory.AlbumListItem)
+
+<AlbumListItem>:
+    size_hint_y: None
+    height: 60
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 3
+    album_id: self.album['album_id']
+    image: image
+    on_release: app.root.play_album_callback(root.album_id)
+    HoverableAsyncImage:
+        id: image
+        source: root.album['album_image_url']
+        enter_func: root.hover_image_enter
+        leave_func: root.hover_image_leave
+        kwargs: {'source_img_hover': '../res/icons/add_to_playlist.png'}
+        size_hint: None, None
+        size: 54, 54
+        on_release: app.root.add_album_to_playlist_callback(root.album_id)
+    TrackPropertyLabel: #Title
+        text: root.album['title']
+        size_hint: .5, 1
+    TrackPropertyLabel: #Albumartist
+        text: root.album['album_artist']
+        size_hint: .4, 1
+    TrackPropertyLabel: #Year
+        text: str(root.album['year'])
+        size_hint: None, 1
+        width: 35
+
+<StationListItem>:
+    size_hint_y: None
+    height: 90
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 3
+    station_id: self.station['seed']
+    image: image
+    #on_release: app.root.play_callback(root.station, root.index)
+    HoverableAsyncImage:
+        id: image
+        source: root.station['image_url_square']
+        enter_func: root.hover_image_enter
+        leave_func: root.hover_image_leave
+        kwargs: {'source_img_hover': '../res/icons/glyphicons-174-play_white.png'}
+        size_hint: None, None
+        size: 84, 84
+        #on_release: app.root.add_album_to_playlist_callback(root.station_id)
+    TrackPropertyLabel: #Title
+        text: root.station['title']
+        size_hint: .3 if root.station['description'] else 1, 1
+    TrackPropertyLabel: #Description
+        text: root.station['description']
+        size_hint: .7 if root.station['description'] else 0, 1
+
+<StationPanelItem>:
+    size_hint: None, None
+    size: 200, 250
+    orientation: 'vertical'
+    spacing: 5
+    padding: 3
+    image: image
+    canvas:
+        Color:
+            rgba: 1, 1, 1, .1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    AnchorLayout:
+        id: image
+        cover: cover
+        play_icon: play_icon
+        anchor_x: 'center'
+        anchor_y: 'center'
+        size_hint: 1, None
+        height: 200
+        Label:  # Description text behind cover image
+            text: root.station['description']
+            text_size: self.size
+            size_hint: 1, 1
+            halign: 'center'
+            valign: 'middle'
+        HoverableAsyncImage:  # Cover image
+            id: cover
+            source: root.station['image_url_square']
+            #source_img_hover: '../res/icons/glyphicons-174-play_white.png'
+            enter_func: root.make_image_opaque
+            leave_func: root.make_image_solid
+            kwargs: {'source_img_hover': '../res/icons/glyphicons-174-play_white.png'}
+            size_hint: 1, 1
+            on_release: app.root.play_station_callback(root.station['title'], root.station['seed'])
+        AnchorLayout:  # Play icon in bottom right corner
+            anchor_x: 'right'
+            anchor_y: 'bottom'
+            size_hint: .9, .9
+            Image:
+                id: play_icon
+                source: '../res/icons/glyphicons-174-play_white.png'
+                size_hint: None, None
+                size: 20, 20
+                color: 1, 1, 1, 0
+    Label:
+        text: root.station['title'] + ' Radio' # Title
+        text_size: self.size
+        size_hint: 1, 1
+        halign: 'center'
+        valign: 'middle'
+
+
+<TrackListItem>:
+    size_hint_y: None
+    height: 60
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 3
+    image: image
+    track_id: self.track['track_id']
+    duration_ms: self.track['duration_ms']
+    on_release: app.root.play_callback(root.track, root.index)
+
+    HoverableAsyncImage:
+        id: image
+        source: root.track['album_image_url']
+        enter_func: root.hover_image_enter
+        leave_func: root.hover_image_leave
+        kwargs: {'source_img_hover': '../res/icons/add_to_playlist.png'}
+        size_hint: None, None
+        size: 54, 54
+        on_release: app.root.add_to_playlist_callback(root.track)
+    TrackPropertyLabel: #Title
+        text: root.track['title']
+        size_hint: .3, 1
+    TrackPropertyLabel: #Duration
+        text: root.track['duration']
+        size_hint: None, 1
+        width: 40
+    TrackPropertyLabel: #Album
+        text: root.track['album']
+        size_hint: .25, 1
+    TrackPropertyLabel: #Artist
+        text: root.track['artist']
+        size_hint: .15, 1
+    ImageButton:
+        text: 'Add album'
+        size_hint: None, None
+        size: 54, 54
+        source: '../res/icons/add_album_to_playlist.png'
+        on_release: app.root.add_album_to_playlist_callback(root.track['album_id'])
+
+<PlaylistTrackListItem>:
+    size_hint_y: None
+    height: 60
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 3
+    track_id: self.track['track_id']
+    duration_ms: self.track['duration_ms']
+    image: image
+    HoverableAsyncImage:
+        id: image
+        source: root.track['album_image_url']
+        enter_func: root.hover_image_enter
+        leave_func: root.hover_image_leave
+        kwargs: {'source_img_hover': '../res/icons/glyphicons-174-play_white.png'}
+        size_hint: None, None
+        size: 54, 54
+        #on_release: app.root.remove_from_playlist_callback(root.track['index'])
+        on_release: app.root.play_from_playlist_callback(root.track, root.index)
+    #TrackPropertyLabel: #Index
+    #    text: str(root.index)
+    #    size_hint: .1, 1
+    TrackPropertyLabel: #Title
+        text: root.track['title']
+        size_hint: .3, 1
+    TrackPropertyLabel: #Duration
+        text: root.track['duration']
+        size_hint: .1, 1
+    TrackPropertyLabel: #Album
+        text: root.track['album']
+        size_hint: .2, 1
+    TrackPropertyLabel: #Artist
+        text: root.track['artist']
+        size_hint: .2, 1
+
+<ScreenButtons>:
+    size_hint: None, None
+    size: self.parent.width, 35
+    ToggleButton:
+        text: 'Songs'
+        group: 'screens'
+        state: 'down'
+        on_release: app.root.switch_screen_callback(self.text)
+    ToggleButton:
+        text: 'Stations'
+        group: 'screens'
+        on_release: app.root.switch_screen_callback(self.text)
+    ToggleButton:
+        text: 'Albums'
+        group: 'screens'
+        on_release: app.root.switch_screen_callback(self.text)
+
+<MP3k>:
+    playbutton: btn_play
+    searchbar: input_search
+    progress_slider: progress_slider
+    playlist_view: list_playlist
+    shufflebutton: btn_shuffle
+    playinglabel: currently_playing_label
+    screenmanagercontainer: screenmanager_container
+    playlist_container: playlist_container
+    canvas:
+        Rectangle:
+            pos: 0, 0
+            size: self.width, 90
+        Rectangle:
+            pos: 0, self.height - 90
+            size: self.width, 90
+    SearchBar:
+        id: input_search
+        size: root.width - 200, 45
+        pos: 100, root.height - 52.5
+        font_size: 30
+        cursor_color: 0, 0, 0, 1
+        on_text_validate: root.search(self.text)
+    ScreenButtons:
+        pos: 0, root.height - 90
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: None, None
+        size: root.width, root.height - 182
+        pos: 0, 92
+        BoxLayout:
+            id: screenmanager_container
+            size_hint: 1, 1
+        BoxLayout:
+            id: playlist_container
+            size_hint: None, 1
+            width: root.playlist_width  # set via config
+            Widget:  # 1px border between screenmanager and playlist
+                size_hint: None, 1
+                width: 1
+                canvas:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            PlaylistView:
+                id: list_playlist
+                size_hint: 1, 1
+    ProgressSlider:
+        id: progress_slider
+        size: root.width, 5
+        pos: 0, 88
+        padding: 0
+        min: 0
+        max: 100
+        value: root.player.progress_percent
+    #Popup:
+    #    id: playlist_popup
+    #    title: 'Playlist'
+    #    size_hint: .7, .7
+    #    pos_hint: {'x': .3, 'y': 90.0 / Window.height}
+    #    PlaylistView:
+    Label:
+        id: currently_playing_label
+        pos: 20, 0
+        width: 300
+        color: 0, 0, 0, 1
+        text_size: self.size
+        halign: 'left'
+        valign: 'middle'
+    CircleButton:
+        id: btn_prev
+        icon: '../res/icons/glyphicons-171-step-backward_white.png'
+        size: 40, 40
+        pos: root.center_x - 72.5, 25
+        on_press: root.previousbutton_callback()
+    CircleButton:
+        id: btn_play
+        size: 55,55
+        pos: root.center_x - 27.5, 17.5
+        icon: '../res/icons/glyphicons-174-play_white.png'
+        #state: 'down' if root.player.playing else 'normal'
+        on_press: root.playbutton_callback()
+    CircleButton:
+        id: btn_next
+        icon: '../res/icons/glyphicons-171-step-forward_white.png'
+        size: 40, 40
+        pos: root.center_x + 32.5, 25
+        on_press: root.nextbutton_callback()
+    ImageButton:
+        id: btn_shuffle
+        size: 50, 50
+        pos: root.center_x + 70, 17.5
+        source_img: '../res/icons/glyphicons-84-random.png'
+        source_img_alt: '../res/icons/glyphicons-84-random_deselect.png'
+        source: self.source_img_alt
+        on_press: root.shufflebutton_callback()
+    ImageButton:
+        id: btn_clear_playlist
+        size: 50, 50
+        pos: root.width - 140, 17.5
+        source: '../res/icons/glyphicons-257-delete.png'
+        on_release: root.clear_playlist_callback()
+    ImageButton:
+        id: btn_playlist
+        size: 50, 50
+        pos: root.width - 100, 17.5
+        source: '../res/icons/glyphicons-160-playlist.png'
+        on_release: root.playlist_button_callback()

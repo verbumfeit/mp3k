@@ -1,0 +1,46 @@
+[
+    {
+        "type": "title",
+        "title": "Google Play Music"
+    },
+    {
+        "key": "login",
+        "type": "string",
+        "title": "Login",
+        "desc": "Google account login",
+        "section": "Google Play Music"
+    },
+    {
+        "key": "password",
+        "type": "string",
+        "title": "Password",
+        "desc": "Google account login password or 2-Auth-App-Password",
+        "section": "Google Play Music"
+    },
+    {
+        "key": "device_id",
+        "type": "string",
+        "title": "Mobile device ID",
+        "desc": "Device ID of a mobile device that is registered to your Google account",
+        "section": "Google Play Music"
+    },
+    {
+        "key": "quality",
+        "type": "options",
+        "title": "Streaming quality",
+        "desc": "Quality of the audio stream in kbps",
+        "section": "Google Play Music",
+        "options": ["Low: 128", "Medium: 160", "High: 320"]
+    },
+    {
+        "type": "title",
+        "title": "Playlist"
+    },
+    {
+        "key": "playlist_width",
+        "type": "numeric",
+        "title": "Playlist width",
+        "desc": "Width of the playlist in px",
+        "section": "Playlist"
+    }
+] 
