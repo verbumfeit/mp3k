@@ -18,6 +18,7 @@ ON_POSIX = 'posix' in sys.builtin_module_names
 class Player(EventDispatcher):
     playing = BooleanProperty(False)  # if playback is paused, also controls state of play button
     progress_percent = NumericProperty(0)
+    volume = NumericProperty(0)
 
     def __init__(self):
         self.streaming_quality = u'hi'
@@ -27,6 +28,7 @@ class Player(EventDispatcher):
         self.output_watcher = None
         self.queue = LifoQueue()
         self._start_mplayer()
+        self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         super().__init__()
 
     def set_streaming_quality(self, quality):
@@ -38,6 +40,14 @@ class Player(EventDispatcher):
             self.streaming_quality = u'low'
 
         Logger.debug('Streaming: Set streaming quality to ' + self.streaming_quality)
+
+    def set_volume(self, value):
+        value = int(value)
+        Logger.debug('Volume: ' + str(self.volume))
+        self.volume = value
+        self.send_cmd_to_mplayer('volume {} 1'.format(int(value)))
+        Globals.CONFIG.set('Player', 'volume', int(value))
+        Globals.CONFIG.write()
 
     @staticmethod
     def format_mplayer_cmd(cmd):

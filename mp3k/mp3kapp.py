@@ -32,6 +32,9 @@ class MP3kApp(App):
         config.setdefaults('Playlist', {
             'playlist_width': 400
         })
+        config.setdefaults('Player', {
+            'volume': 75
+        })
 
     def on_config_change(self, config, section, key, value):
         self.root.on_config_changed(section, key, value)

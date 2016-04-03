@@ -303,6 +303,7 @@
     playinglabel: currently_playing_label
     screenmanagercontainer: screenmanager_container
     playlist_container: playlist_container
+    volumeslider: volume_slider
     canvas:
         Rectangle:
             pos: 0, 0
@@ -392,6 +393,15 @@
         source_img_alt: '../res/icons/glyphicons-84-random_deselect.png'
         source: self.source_img_alt
         on_press: root.shufflebutton_callback()
+    Slider:
+        id: volume_slider
+        size: 100, 5
+        pos: root.width - 260, 42.5
+        padding: 0
+        min: 0
+        max: 100
+        on_value: root.player.set_volume(self.value)
+        value: root.player.volume
     ImageButton:
         id: btn_clear_playlist
         size: 50, 50
