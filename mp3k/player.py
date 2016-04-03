@@ -71,7 +71,7 @@ class Player(EventDispatcher):
                 if len(split_output) == 2 and split_output[0] == '':  # we have found it
                     value = split_output[1]
                     return value.rstrip()
-                elif output.rstrip() == 'Exiting... (End of file)':
+                elif 'EOF code:' in output:
                     Logger.debug('Reached end of file..')
                     return False
         else:
@@ -82,7 +82,7 @@ class Player(EventDispatcher):
     @staticmethod
     def enqueue_output(out, queue):
         for line in iter(out.readline, b''):
-            if '=' in line:
+            if '=' in line or 'EOF code:' in line:
                 queue.put(line)
         out.close()
 
@@ -145,14 +145,13 @@ class Player(EventDispatcher):
         self.playing = False
         self.playback_started = False
         self.progress_percent = 0
-        self._cleanup_mplayer_process()
 
     def _start_mplayer(self):
         Logger.info('mplayer: Starting..')
-        cmd = ['mplayer', '-slave', '-idle', '-quiet']
-        self.player = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
-                                       close_fds=ON_POSIX)
+        # start mplayer as slave in idle mode, keep it quiet but emit EOF when end of file is reached
+        cmd = ['mplayer', '-slave', '-idle', '-quiet', '-msglevel', 'all=-1:global=6']
+        self.player = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=1,
+                                       universal_newlines=True, close_fds=ON_POSIX)
 
         Globals.MPLAYER_PID = self.player.pid
 
