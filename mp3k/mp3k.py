@@ -204,8 +204,11 @@ class MP3k(Widget):
     def mark_playing_track(self):
         # track_item = self.playlist_view.get_track(0)
         # track_item.update_image('../res/icons/equalizer.gif')
-        self.playinglabel.text = '{} - {}'.format(self.player.current_track['title'],
-                                                  self.player.current_track['artist'])
+        playing_text = '{} - {}'.format(self.player.current_track['title'],
+                                        self.player.current_track['artist'])
+
+        self.playinglabel.text = playing_text
+        App.get_running_app().title = playing_text
 
     def restart_track(self):
         Logger.info('Restarting track..')
@@ -222,6 +225,8 @@ class MP3k(Widget):
         track = self.playlist.get_next_track()
         if track:
             self.play_track(track)
+        else:
+            App.get_running_app().title = 'MusicPlayer 3000 for Google Play Music™'
 
     def switch_screen_callback(self, screen_title):
         self.sm.current = screen_title
@@ -343,7 +348,12 @@ class MP3k(Widget):
                 self.playlist.add_track(track)
             self.fix_scrolling_workaround()
             # self.playlist.set_current_track(0)
-            self.playbutton_callback()
+            #self.playbutton_callback()
+            track = self.playlist.get_start()
+            if track:
+                self.play_track(track)
+            else:  # do nothing if no track selected
+                pass
 
     def playlist_button_callback(self):
         if self.playlist_hidden:

@@ -68,12 +68,12 @@ class Formatter:
         tracks_formatted = []
         for index, track in enumerate(tracks):
             tracks_formatted.append({
-                'title': track['title'],
+                'title': track['title'] if 'title' in track else '',
                 'track_id': track['nid'],
-                'track_number': track['trackNumber'],
-                'artist': track['artist'],
+                'track_number': track['trackNumber'] if 'trackNumber' in track else '',
+                'artist': track['artist'] if 'artist' in track else '',
                 'artist_id': track['artistId'][0] if 'artistId' in track else '',
-                'album': track['album'],
+                'album': track['album'] if 'album' in track else '',
                 'album_id': track['albumId'] if 'albumId' in track else '',
                 'album_artist': track['albumArtist'] if 'albumArtist' in track else '',
                 'album_image_url': track['albumArtRef'][0]['url'] if 'albumArtRef' in track else '',

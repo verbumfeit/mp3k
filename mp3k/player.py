@@ -29,6 +29,7 @@ class Player(EventDispatcher):
         self.queue = LifoQueue()
         self._start_mplayer()
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
+        self.set_volume(self.volume)
         super().__init__()
 
     def set_streaming_quality(self, quality):
@@ -82,8 +83,11 @@ class Player(EventDispatcher):
                     value = split_output[1]
                     return value.rstrip()
                 elif 'EOF code:' in output:
-                    Logger.debug('Reached end of file..')
-                    return False
+                    Logger.debug('Output: ' + output)
+                    if '1' in output:  # regular exit code
+                        Logger.debug('Reached end of file..')
+                        return False
+                    # EOF code: 4 is also possible (don't know what it means)
         else:
             Logger.debug('mplayer process finished..')
             self._start_mplayer()
@@ -104,7 +108,7 @@ class Player(EventDispatcher):
         mp3_url = Globals.API.get_stream_url(track['track_id'], self.streaming_quality)
         Logger.trace(mp3_url)
         # set download location
-        mp3_path = '../res/stream.mp3'
+        mp3_path = '/tmp/stream.mp3'
         track['mp3_path'] = mp3_path
         # set current track
         self.current_track = track
