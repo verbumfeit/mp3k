@@ -276,6 +276,7 @@ class MP3k(Widget):
             if track:
                 self.play_track(track)
             else:  # do nothing if no track selected
+                #self.librarymanager.synchronize_library()
                 pass
 
     def nextbutton_callback(self):
@@ -369,7 +370,7 @@ class MP3k(Widget):
         # self.playlist.set_current_track(0)
 
     def search(self, text):
-        if len(text) > 3:
+        if len(text) >= 3:
             try:
                 search_results = Globals.API.search(text)
                 # with open('search_test.json', 'w') as outfile:

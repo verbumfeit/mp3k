@@ -68,7 +68,7 @@ class Playlist(EventDispatcher):
         else:
             old_index, current_track = self.get_current_track()
 
-            if current_track and old_index >= 0:  #
+            if current_track and old_index >= 0:   # -1 if track had no index property (error)(should be fixed / No track was playing
                 new_index = int(old_index) + 1
                 if new_index < len(self.queue):
                     idx, track = self.set_current_track(new_index)
@@ -92,13 +92,16 @@ class Playlist(EventDispatcher):
     def get_current_track(self):
         for index, track in enumerate(self.queue):
             if 'playing' in track and track['playing']:
-                if 'index' in track:
-                    Logger.debug('get_current_track: Current track index is ' + str(track['index']))
-                    return track['index'], track
-                else:
-                    Logger.error('get_current_track: Current track has no index property')
-                    # TODO: Why does the track have no index? ListView problem of kivy?
-                    return -1, None
+                # if 'index' in track:
+                #     Logger.debug('get_current_track: Current track index is ' + str(track['index']))
+                #     return track['index'], track
+                # else:
+                #     Logger.error('get_current_track: Current track has no index property')
+                #     # TODO: Why does the track have no index? ListView problem of kivy?
+                #     return -1, None
+
+                Logger.debug('get_current_track: Current track index is ' + str(index))
+                return index, track
 
         Logger.debug('No current track')
         return -1, None
