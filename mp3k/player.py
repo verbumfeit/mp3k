@@ -9,6 +9,7 @@ from threading import Thread
 from kivy.clock import mainthread
 from kivy.event import EventDispatcher
 from kivy.properties import BooleanProperty, NumericProperty, Logger
+from pathlib import Path
 
 from globals import Globals
 
@@ -108,7 +109,7 @@ class Player(EventDispatcher):
         mp3_url = Globals.API.get_stream_url(track['track_id'], self.streaming_quality)
         Logger.trace(mp3_url)
         # set download location
-        mp3_path = '/tmp/stream.mp3'
+        mp3_path = str(Path('../res/stream.mp3').resolve())
         track['mp3_path'] = mp3_path
         # set current track
         self.current_track = track
