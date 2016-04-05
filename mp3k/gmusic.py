@@ -14,8 +14,26 @@ class GoogleMusicApi:
             Logger.debug('API: Already logged in')
             return True
 
+    def relogin(self, username, password, device_id):
+        try:
+            return self._api.login(username, password, device_id)
+        except AlreadyLoggedIn:
+            self._api.logout()
+            return self._api.login(username, password, device_id)
+
     def logout(self):
         return self._api.logout()
+
+    def get_registered_mobile_devices(self):
+        devices = self._api.get_registered_devices()
+        mobile_devices = []
+        for device in devices:
+            if device['type'] == "ANDROID":  # TODO: Add iOS
+                mobile_devices.append({
+                    'name': device['friendlyName'],
+                    'id': device['id'][2:]
+                })
+        return mobile_devices
 
     def get_stream_url(self, track_id, quality):
         return self._api.get_stream_url(song_id=track_id, quality=quality)

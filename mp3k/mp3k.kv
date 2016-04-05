@@ -7,6 +7,69 @@
 #:import App kivy.app.App
 #:import Factory kivy.factory.Factory
 
+<LoginDevices>:
+    device_button_container: device_button_container
+    anchor_x: 'center'
+    anchor_y: 'center'
+    Label:
+        text: "Select a mobile device (it's ID will be used when streaming music)"
+    BoxLayout:
+        orientation:'vertical'
+        size_hint: .5, .5
+        id: device_button_container
+    AnchorLayout:  # Next Button
+        anchor_x: 'right'
+        anchor_y: 'bottom'
+        size_hint: .5, .7
+        height: 150
+        Button:
+            size_hint: .2, None
+            height: 30
+            text: 'Next'
+            on_release: app.root.try_login_step_2(root.device_button_container)
+
+<LoginCredentials>:
+    anchor_x: 'center'
+    anchor_y: 'center'
+    login_failed_label: login_failed_label
+    GridLayout:
+        cols: 2
+        size_hint: .9, None
+        height: 100
+        Label:
+            text: 'Email'
+            size_hint_x: .2
+        TextInput:
+            id: google_login_input  # Login input
+            hint_text: 'Google Mail'
+            text: root.old_login
+            multiline: False
+            on_focus: root.login_failed_label.color=(1, 0, 0, 0)
+        Label:
+            text: 'Password'
+            size_hint_x: .2
+        TextInput:
+            id: google_password_input  # Password input
+            hint_text: 'Google password or app password if you use 2-Factor-Authentication'
+            password:  True
+            multiline: False
+            on_focus: root.login_failed_label.color=(1, 0, 0, 0)
+        Label:
+            id: login_failed_label
+            text: 'Login failed :('
+            color: 1, 0, 0, 0
+    AnchorLayout:  # Next button
+        anchor_x: 'right'
+        anchor_y: 'bottom'
+        size_hint: .9, None
+        height: 150
+        Button:
+            size_hint: .2, None
+            height: 30
+            text: 'Next'
+            on_release: app.root.try_login_step_1(root, google_login_input.text, google_password_input.text)
+
+
 <CircleButton>:
     icon: ''
     AnchorLayout:

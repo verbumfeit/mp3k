@@ -1,5 +1,7 @@
+from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.gridlayout import GridLayout
-from kivy.properties import BooleanProperty, NumericProperty, ListProperty, ObjectProperty
+from kivy.properties import BooleanProperty, NumericProperty, ListProperty, ObjectProperty, StringProperty
 from kivy.uix.behaviors.button import ButtonBehavior
 from kivy.uix.selectableview import SelectableView
 from kivy.uix.boxlayout import BoxLayout
@@ -11,6 +13,22 @@ from kivy.logger import Logger
 from math import sqrt
 from inspect import ismethod
 from globals import Globals
+
+
+class LoginCredentials(AnchorLayout):
+    def __init__(self, **kwargs):
+        self.old_login = Globals.CONFIG.get('Google Play Music', 'login')
+        super().__init__(**kwargs)
+
+
+class LoginDevices(AnchorLayout):
+    pass
+
+
+class DeviceButton(ToggleButton):
+    def __init__(self, device_id=None, **kwargs):
+        self.device_id = device_id
+        super().__init__(**kwargs)
 
 
 class SongViewer(GridLayout):

@@ -6,7 +6,6 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.logger import Logger
 from kivy.properties import NumericProperty
-from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.scrollview import ScrollView
@@ -14,7 +13,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.widget import Widget
 from kivy.utils import QueryDict, interpolate
 
-from customwidgets import SongViewer, AlbumViewer, StationPanelItem
+from customwidgets import SongViewer, AlbumViewer, StationPanelItem, LoginCredentials, LoginDevices, DeviceButton
 from formatter import Formatter
 from globals import Globals
 from gmusic import GoogleMusicApi
@@ -85,18 +84,65 @@ class MP3k(Widget):
                 self.login_failed_popup = None
         else:
             Logger.warning("Google Music: Login Failed")
-            # TODO: Show login popup
             if not self.login_failed_popup:
-                popup = Popup(title='Google Play Music™ login', content=Label(
-                    text='Please enter your credentials by pressing F1'), auto_dismiss=False, size_hint=(1, 1))
+                popup = Popup(title='Google Play Music™ login', content=LoginCredentials(), auto_dismiss=False,
+                              size_hint=(1, 1))
                 self.login_failed_popup = popup
 
             if Globals.STARTED:  # login failed after configuration change
-                self.login_failed_popup.open()  # open popup because MP3k was loaded
+                self.login_failed_popup.open()  # open popup because MP3k is completely rendered
                 App.get_running_app().close_settings()
 
             else:  # login failed on start
-                pass  # wait with popup until MP3k is completely loaded (mp3kapp opens the popup in on_start()
+                pass  # wait with popup until MP3k is completely rendered (MP3kApp opens the popup in on_start())
+
+    def try_login_step_1(self, instance, google_login, google_password):
+        # Credentials login without device ID
+        if Globals.API.login(google_login, google_password, ''):
+            # login successful
+            Globals.CONFIG.set('Google Play Music', 'login', google_login)
+            Globals.CONFIG.set('Google Play Music', 'password', google_password)
+            Globals.CONFIG.write()
+
+            self.show_device_login()
+
+        else:
+            instance.login_failed_label.color = (1, 0, 0, 1)
+
+    def try_login_step_2(self, button_container):
+        # look for selected device
+        for button in button_container.children:
+            if button.state == 'down':  # got it
+                Globals.CONFIG.set('Google Play Music', 'device_id', button.device_id)
+                Globals.CONFIG.write()  # set device id in config
+
+                if Globals.API.relogin(Globals.CONFIG.get('Google Play Music', 'login'),  # re-login with valid device_id
+                                       Globals.CONFIG.get('Google Play Music', 'password'),
+                                       Globals.CONFIG.get('Google Play Music', 'device_id')):
+                    self.login_failed_popup.dismiss()
+                    break
+        else:
+            Logger.error('LOGIN: You have to select a device!')
+
+    def show_device_login(self):
+        self.login_failed_popup.dismiss()
+        self.login_failed_popup = Popup(title='Google Play Music™ login', content=self.build_devices_login(),
+                                        auto_dismiss=False,
+                                        size_hint=(1, 1))
+        self.login_failed_popup.open()
+
+    @staticmethod
+    def build_devices_login():
+        devices = Globals.API.get_registered_mobile_devices()  # get registered mobile devices
+        login_devices = LoginDevices()
+
+        # add buttons for devices
+        for device in devices:
+            btn = DeviceButton(text='{} (ID: {})'.format(device['name'], device['id']), device_id=device['id'],
+                               size_hint_y=None, height=30, group='devices')
+            login_devices.device_button_container.add_widget(btn)
+
+        return login_devices
 
     def init_screens(self):
 
