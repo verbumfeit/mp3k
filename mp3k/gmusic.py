@@ -88,3 +88,6 @@ class GoogleMusicApi:
     def create_station(self, name, track_id=None, artist_id=None, album_id=None, genre_id=None, playlist_token=None):
         return self._api.create_station(name, track_id=track_id, artist_id=artist_id, album_id=album_id,
                                         genre_id=genre_id, playlist_token=playlist_token)
+
+    def increment_track_playcount(self, track_id):
+        self._api.increment_song_playcount(track_id)

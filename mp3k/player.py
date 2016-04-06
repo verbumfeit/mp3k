@@ -32,7 +32,7 @@ class Player(EventDispatcher):
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         self.set_volume(self.volume)
 
-        self.mp3_path = os.path.realpath(sys.path[0] + '{0}..{0}res{0}stream.mp3'.format(os.sep))  # set mp3 path
+        self.mp3_path = Globals.get_valid_path('../res/stream.mp3')  # set mp3 path
         open(self.mp3_path, 'w').close()  # Create/empty dummy mp3
 
         super().__init__()
@@ -158,6 +158,8 @@ class Player(EventDispatcher):
 
     def playback_finished(self):
         Logger.info('Playback finished..')
+        if not Globals.TESTING:
+            Globals.API.increment_track_playcount(self.current_track['track_id'])
         self.playing = False
         self.playback_started = False
         self.progress_percent = 0

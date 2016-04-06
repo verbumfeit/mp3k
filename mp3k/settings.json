@@ -42,5 +42,16 @@
         "title": "Playlist width",
         "desc": "Width of the playlist in px",
         "section": "Playlist"
+    },
+    {
+        "type": "title",
+        "title": "Development"
+    },
+    {
+        "key": "test_mode",
+        "type": "bool",
+        "title": "Development mode",
+        "desc": "Don't count tracks that are playing",
+        "section": "Development"
     }
 ] 

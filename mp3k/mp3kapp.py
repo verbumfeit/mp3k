@@ -40,9 +40,12 @@ class MP3kApp(App):
         config.setdefaults('Player', {
             'volume': 75
         })
+        config.setdefaults('Development', {
+            'test_mode': 0
+        })
 
     def on_config_change(self, config, section, key, value):
         self.root.on_config_changed(section, key, value)
 
     def build_settings(self, settings):
-        settings.add_json_panel('MusicPlayer 3000', self.config, 'settings.json')
+        settings.add_json_panel('MusicPlayer 3000', self.config, Globals.get_valid_path('settings.json'))

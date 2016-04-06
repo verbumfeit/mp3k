@@ -31,6 +31,8 @@ class MP3k(Widget):
 
     def __init__(self, **kwargs):
         Globals.CONFIG = App.get_running_app().config
+        Globals.TESTING = Globals.CONFIG.get('Development', 'test_mode')
+
         self.playlist_width = int(Globals.CONFIG.get('Playlist', 'playlist_width'))
 
         Globals.API = GoogleMusicApi()
@@ -245,6 +247,10 @@ class MP3k(Widget):
         elif section == 'Google Play Music':
             Globals.API.logout()
             self.google_music_api_login()
+
+        elif section == 'Development':
+            if key == 'test_mode':
+                Globals.TESTING = True if value == '1' else False
 
     def fix_scrolling_workaround(self):
         self.playlist_view.listview._reset_spopulate()
