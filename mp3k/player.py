@@ -3,13 +3,14 @@ import signal
 import subprocess
 import sys
 import urllib.request
+from pathlib import Path
 from queue import LifoQueue, Empty
 from threading import Thread
 
 from kivy.clock import mainthread
 from kivy.event import EventDispatcher
-from kivy.properties import BooleanProperty, NumericProperty, Logger
-from pathlib import Path
+from kivy.logger import Logger
+from kivy.properties import BooleanProperty, NumericProperty
 
 from globals import Globals
 
@@ -31,6 +32,10 @@ class Player(EventDispatcher):
         self._start_mplayer()
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         self.set_volume(self.volume)
+
+        open('../res/stream.mp3', 'w').close()  # Create/empty dummy mp3
+        self.mp3_path = str(Path('..', 'res', 'stream.mp3').resolve())  # set mp3 path
+
         super().__init__()
 
     def set_streaming_quality(self, quality):
@@ -108,17 +113,14 @@ class Player(EventDispatcher):
         # get stream url
         mp3_url = Globals.API.get_stream_url(track['track_id'], self.streaming_quality)
         Logger.trace(mp3_url)
-        # set download location
-        mp3_path = str(Path('../res/stream.mp3').resolve())
-        track['mp3_path'] = mp3_path
         # set current track
         self.current_track = track
         # start download
-        Thread(target=self.download_and_play_track_thread, args=(mp3_url, mp3_path, Globals.BUFFER_ITERATIONS)).start()
+        Thread(target=self.download_and_play_track_thread, args=(mp3_url, self.mp3_path, Globals.BUFFER_ITERATIONS)).start()
 
     @mainthread
     def _play(self):
-        self.send_cmd_to_mplayer('loadfile ' + self.current_track['mp3_path'])
+        self.send_cmd_to_mplayer('loadfile ' + self.mp3_path)
 
         self.playback_started = True
         self.playing = True
