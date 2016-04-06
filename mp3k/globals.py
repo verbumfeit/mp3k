@@ -8,6 +8,7 @@ class Globals:
     TESTING = False
     STARTED = False
     MPLAYER_PID = None
+    MP3_PATH = None
     BUFFER_ITERATIONS = 1
     API = None
     CONFIG = None

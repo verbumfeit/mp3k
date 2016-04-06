@@ -32,8 +32,8 @@ class Player(EventDispatcher):
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         self.set_volume(self.volume)
 
-        self.mp3_path = Globals.get_valid_path('../res/stream.mp3')  # set mp3 path
-        open(self.mp3_path, 'w').close()  # Create/empty dummy mp3
+        Globals.MP3_PATH = Globals.get_valid_path('../res/stream{}.mp3'.format(Globals.MPLAYER_PID))  # set mp3 path & name
+        open(Globals.MP3_PATH, 'w').close()  # Create/empty dummy mp3
 
         super().__init__()
 
@@ -115,11 +115,11 @@ class Player(EventDispatcher):
         # set current track
         self.current_track = track
         # start download
-        Thread(target=self.download_and_play_track_thread, args=(mp3_url, self.mp3_path, Globals.BUFFER_ITERATIONS)).start()
+        Thread(target=self.download_and_play_track_thread, args=(mp3_url, Globals.MP3_PATH, Globals.BUFFER_ITERATIONS)).start()
 
     @mainthread
     def _play(self):
-        self.send_cmd_to_mplayer('loadfile ' + self.mp3_path)
+        self.send_cmd_to_mplayer('loadfile ' + Globals.MP3_PATH)
 
         self.playback_started = True
         self.playing = True
@@ -186,6 +186,8 @@ class Player(EventDispatcher):
         if Globals.MPLAYER_PID:
             Logger.debug('Killing mplayer process..')
             os.kill(Globals.MPLAYER_PID, signal.SIGTERM)
+            Logger.debug('Removing mp3 file..')
+            os.remove(Globals.MP3_PATH)
 
     def kill_output_watcher(self):
         self.output_watcher.join()
