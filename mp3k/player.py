@@ -3,7 +3,6 @@ import signal
 import subprocess
 import sys
 import urllib.request
-from pathlib import Path
 from queue import LifoQueue, Empty
 from threading import Thread
 
@@ -33,8 +32,8 @@ class Player(EventDispatcher):
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         self.set_volume(self.volume)
 
-        open('../res/stream.mp3', 'w').close()  # Create/empty dummy mp3
-        self.mp3_path = str(Path('..', 'res', 'stream.mp3').resolve())  # set mp3 path
+        self.mp3_path = os.path.realpath(sys.path[0] + '{0}..{0}res{0}stream.mp3'.format(os.sep))  # set mp3 path
+        open(self.mp3_path, 'w').close()  # Create/empty dummy mp3
 
         super().__init__()
 
@@ -93,7 +92,7 @@ class Player(EventDispatcher):
                     if '1' in output:  # regular exit code
                         Logger.debug('Reached end of file..')
                         return False
-                    # EOF code: 4 is also possible (don't know what it means)
+                    # EOF code: 4 is also possible (interrupted playback by loading a new file)
         else:
             Logger.debug('mplayer process finished..')
             self._start_mplayer()

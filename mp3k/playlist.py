@@ -2,7 +2,6 @@ import random
 
 from kivy.event import EventDispatcher
 from kivy.properties import ListProperty, Logger
-from globals import Globals
 
 
 class Playlist(EventDispatcher):
@@ -108,3 +107,6 @@ class Playlist(EventDispatcher):
 
     def clear(self):
         self.queue = []
+
+    def get_queue(self):
+        return self.queue

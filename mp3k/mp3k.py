@@ -17,6 +17,7 @@ from customwidgets import SongViewer, AlbumViewer, StationPanelItem, LoginCreden
 from formatter import Formatter
 from globals import Globals
 from gmusic import GoogleMusicApi
+from history import History
 from library import LibraryManager
 from player import Player
 from playlist import Playlist
@@ -42,8 +43,13 @@ class MP3k(Widget):
         self.player.set_streaming_quality(Globals.CONFIG.get('Google Play Music', 'quality').split(':')[0])
 
         self.playlist = Playlist()
+
         self.librarymanager = LibraryManager()
         # self.librarymanager.load_library()
+
+        self.history = History()
+        self.playlist.queue = self.history.playlist_history
+
         self.updating_progress = False
         self.playlist_hidden = False
 

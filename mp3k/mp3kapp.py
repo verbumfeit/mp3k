@@ -20,6 +20,11 @@ class MP3kApp(App):
             self.root.login_failed_popup.open()
 
     def on_stop(self):
+        # Save history
+        self.root.history.save_to_history('playlist', self.root.playlist.get_queue())
+        self.root.history.write_history()
+
+        # Kill mplayer
         self.root.player.kill_mplayer()
 
     def build_config(self, config):

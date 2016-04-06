@@ -1,6 +1,6 @@
 from gmusicapi import Mobileclient
 from gmusicapi.exceptions import AlreadyLoggedIn
-from kivy import Logger
+from kivy.logger import Logger
 
 
 class GoogleMusicApi:
