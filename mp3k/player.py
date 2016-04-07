@@ -1,10 +1,10 @@
 import os
-import signal
 import subprocess
 import sys
 import urllib.request
 from queue import LifoQueue, Empty
 from threading import Thread
+from time import sleep
 
 from kivy.clock import mainthread
 from kivy.event import EventDispatcher
@@ -32,7 +32,8 @@ class Player(EventDispatcher):
         self.volume = int(Globals.CONFIG.get('Player', 'volume'))
         self.set_volume(self.volume)
 
-        Globals.MP3_PATH = Globals.get_valid_path('../res/stream{}.mp3'.format(Globals.MPLAYER_PID))  # set mp3 path & name
+        # set mp3 path & name (replace \ with / because mplayer expects / as separator, even on Windows)
+        Globals.MP3_PATH = Globals.get_valid_path('../res/stream{}.mp3'.format(Globals.MPLAYER_PID)).replace('\\', '/')
         open(Globals.MP3_PATH, 'w').close()  # Create/empty dummy mp3
 
         super().__init__()
@@ -167,9 +168,10 @@ class Player(EventDispatcher):
     def _start_mplayer(self):
         Logger.info('mplayer: Starting..')
         # start mplayer as slave in idle mode, keep it quiet but emit EOF when end of file is reached
-        cmd = ['mplayer', '-slave', '-idle', '-quiet', '-msglevel', 'all=-1:global=6']
+        mplayer_path = Globals.CONFIG.get('mplayer', 'mplayer_path')
+        cmd = [mplayer_path, '-slave', '-idle', '-quiet', '-msglevel', 'all=-1:global=6']
         self.player = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=1,
-                                       universal_newlines=True, close_fds=ON_POSIX)
+                                       universal_newlines=True, close_fds=ON_POSIX)  # TODO: Add exception handling
 
         Globals.MPLAYER_PID = self.player.pid
 
@@ -181,11 +183,11 @@ class Player(EventDispatcher):
 
         Logger.info('mplayer: Successfully started')
 
-    @staticmethod
-    def kill_mplayer():
+    def kill_mplayer(self):
         if Globals.MPLAYER_PID:
             Logger.debug('Killing mplayer process..')
-            os.kill(Globals.MPLAYER_PID, signal.SIGTERM)
+            self.player.terminate()
+            sleep(.1)
             Logger.debug('Removing mp3 file..')
             os.remove(Globals.MP3_PATH)
 

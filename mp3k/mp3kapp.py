@@ -1,3 +1,6 @@
+import sys
+
+from kivy import platform
 from kivy.app import App
 from kivy.uix.settings import SettingsWithSidebar
 
@@ -40,6 +43,16 @@ class MP3kApp(App):
         config.setdefaults('Player', {
             'volume': 75
         })
+
+        default_mplayer_path = ''
+        if platform == 'linux':
+            default_mplayer_path = '/usr/bin/mplayer'
+        elif platform == 'win':
+            default_mplayer_path = sys.path[0] + '\\mplayer.exe'
+        config.setdefaults('mplayer', {
+            'mplayer_path':  default_mplayer_path
+        })
+
         config.setdefaults('Development', {
             'test_mode': 0
         })

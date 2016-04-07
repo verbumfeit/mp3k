@@ -45,6 +45,17 @@
     },
     {
         "type": "title",
+        "title": "MPlayer"
+    },
+    {
+        "key": "mplayer_path",
+        "type": "path",
+        "title": "MPlayer location",
+        "desc": "The Path to the mplayer executable",
+        "section": "mplayer"
+    },
+    {
+        "type": "title",
         "title": "Development"
     },
     {
